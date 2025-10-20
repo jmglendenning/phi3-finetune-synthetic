@@ -3,6 +3,6 @@ __pycache__/
 *.bin
 *.jsonl
 *.tar.gz
-checkpoints/
+
 output/
 .env
