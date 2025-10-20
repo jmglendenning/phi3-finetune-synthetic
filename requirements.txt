@@ -1,0 +1,7 @@
+torch==2.1.0+cu121
+transformers
+datasets
+accelerate
+peft
+trl
+scipy
