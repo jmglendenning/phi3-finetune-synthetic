@@ -20,4 +20,5 @@ COPY . .
 EXPOSE 8081
 
 # Default command to launch FastAPI server (update if you use a different script/command)
-CMD ["uvicorn", "serve_model:app", "--host", "0.0.0.0", "--port", "8081"]
+
+CMD ["bash"]
