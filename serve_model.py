@@ -33,23 +33,33 @@ model.eval()
 class Prompt(BaseModel):
     prompt: str
     max_tokens: int = 256
-    temperature: float = 0.7
+    temperature: float = 0.2
     top_p: float = 0.9
     stop: Optional[List[str]] = None
+
+class Prompt(BaseModel):
+    prompt: str
+    max_tokens: int = 256
+    temperature: float = 0.2
+    top_p: float = 0.9
+    do_sample: bool = False
 
 # === /generate Endpoint ===
 @app.post("/generate")
 async def generate_text(data: Prompt):
     inputs = tokenizer(data.prompt, return_tensors="pt").to(model.device)
     with torch.no_grad():
+
+        stop_sequences = ["]", "}"]  # optional stop tokens if your tokenizer supports it
+
         output = model.generate(
             **inputs,
             max_new_tokens=data.max_tokens,
-            do_sample=True,
+            do_sample=data.do_sample,
             temperature=data.temperature,
             top_p=data.top_p,
-            pad_token_id=tokenizer.pad_token_id,
-            eos_token_id=tokenizer.eos_token_id
+            eos_token_id=tokenizer.eos_token_id,  # ensures it can stop early
+            pad_token_id=tokenizer.eos_token_id   # avoids pad-token warnings
         )
 
     # === Decode full output ===
