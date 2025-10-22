@@ -3,12 +3,15 @@ from pydantic import BaseModel
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from peft import PeftModel
+from typing import Optional, List
+
+# === Initialize FastAPI ===
+app = FastAPI()
+
+# === Ping Endpoint ===
 @app.get("/ping")
 async def ping():
     return {"status": "ready", "model": "phi3-mini"}
-    
-# === Initialize FastAPI ===
-app = FastAPI()
 
 # === Paths ===
 base_model_path = "/workspace/models/Phi-3-mini-4k-instruct"
@@ -17,23 +20,24 @@ adapter_path = "/workspace/phi3-finetune-synthetic/checkpoints"
 # === Load tokenizer ===
 tokenizer = AutoTokenizer.from_pretrained(adapter_path)
 
-# === Load base model ===
+# === Load base model + adapter ===
 base_model = AutoModelForCausalLM.from_pretrained(
     base_model_path,
     torch_dtype=torch.float16,
     device_map="auto"
 )
-
-# === Load adapter ===
 model = PeftModel.from_pretrained(base_model, adapter_path)
 model.eval()
 
-# === Input schema ===
+# === Request Schema ===
 class Prompt(BaseModel):
     prompt: str
     max_tokens: int = 256
+    temperature: float = 0.7
+    top_p: float = 0.9
+    stop: Optional[List[str]] = None
 
-# === Endpoint ===
+# === /generate Endpoint ===
 @app.post("/generate")
 async def generate_text(data: Prompt):
     inputs = tokenizer(data.prompt, return_tensors="pt").to(model.device)
@@ -42,9 +46,20 @@ async def generate_text(data: Prompt):
             **inputs,
             max_new_tokens=data.max_tokens,
             do_sample=True,
-            temperature=0.7,
-            top_p=0.9
+            temperature=data.temperature,
+            top_p=data.top_p,
+            pad_token_id=tokenizer.pad_token_id,
+            eos_token_id=tokenizer.eos_token_id
         )
-    # Trim prompt prefix if needed
-    generated = tokenizer.decode(output[0], skip_special_tokens=True)
-    return {"response": generated}
+
+    # === Decode full output ===
+    decoded = tokenizer.decode(output[0], skip_special_tokens=True)
+
+    # === Stop token simulation (manual truncation) ===
+    if data.stop:
+        for token in data.stop:
+            if token in decoded:
+                decoded = decoded.split(token)[0]
+                break
+
+    return {"response": decoded}
