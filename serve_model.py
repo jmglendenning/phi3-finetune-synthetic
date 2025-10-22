@@ -3,7 +3,10 @@ from pydantic import BaseModel
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from peft import PeftModel
-
+@app.get("/ping")
+async def ping():
+    return {"status": "ready", "model": "phi3-mini"}
+    
 # === Initialize FastAPI ===
 app = FastAPI()
 
