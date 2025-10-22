@@ -1,3 +1,5 @@
+torch==2.1.0+cu121
+--extra-index-url https://download.pytorch.org/whl/cu121
 transformers
 datasets
 accelerate
