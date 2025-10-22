@@ -35,15 +35,9 @@ class Prompt(BaseModel):
     max_tokens: int = 256
     temperature: float = 0.2
     top_p: float = 0.9
-    stop: Optional[List[str]] = None
-
-class Prompt(BaseModel):
-    prompt: str
-    max_tokens: int = 256
-    temperature: float = 0.2
-    top_p: float = 0.9
     do_sample: bool = False
-
+    stop: Optional[List[str]] = None
+    
 # === /generate Endpoint ===
 @app.post("/generate")
 async def generate_text(data: Prompt):
